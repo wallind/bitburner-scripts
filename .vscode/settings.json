@@ -1,0 +1,82 @@
+{
+	"bitburner.authToken": "nyFVFxxnBzIJBde9LCQyi9AA6Fm5xhf0Ii6n4zMqfRlS47E0kpTSTEB+UWUbhh4G",
+	"bitburner.fileWatcher.enable": true,
+	"editor.detectIndentation": false,
+	"editor.tabSize": 2,
+	"editor.formatOnSave": true,
+	"editor.formatOnSaveMode": "file",
+	"editor.formatOnPaste": true,
+	"editor.insertSpaces": false,
+	"editor.formatOnType": true,
+	"editor.hover.delay": 200,
+	"editor.linkedEditing": true,
+	"editor.semanticHighlighting.enabled": "configuredByTheme",
+	"editor.showDeprecated": true,
+	"editor.suggest.showClasses": true,
+	"editor.suggest.showColors": true,
+	"editor.suggest.showConstants": true,
+	"editor.suggest.showConstructors": true,
+	"editor.suggest.showCustomcolors": true,
+	"editor.suggest.showEnumMembers": true,
+	"editor.suggest.showEnums": true,
+	"editor.suggest.showFields": true,
+	"editor.suggest.showFiles": true,
+	"editor.quickSuggestions": {
+		"other": true,
+		"comments": false,
+		"strings": false
+	},
+	"editor.renderLineHighlight": "all",
+	"editor.suggest.preview": true,
+	"editor.tabCompletion": "on",
+	"editor.guides.indentation": true,
+	"editor.guides.highlightActiveIndentation": true,
+	"editor.autoClosingBrackets": "always",
+	"editor.autoSurround": "languageDefined",
+	"editor.comments.insertSpace": true,
+	"extensions.ignoreRecommendations": false,
+	"files.eol": "\n",
+	"files.exclude": {
+		"**/node_modules": true,
+	},
+	"files.insertFinalNewline": true,
+	"files.trimFinalNewlines": true,
+	"javascript.format.insertSpaceBeforeFunctionParenthesis": false,
+	"javascript.format.semicolons": "remove",
+	"javascript.preferences.importModuleSpecifier": "non-relative",
+	"javascript.preferences.quoteStyle": "single",
+	"javascript.preferences.importModuleSpecifierEnding": "index",
+	"javascript.suggest.completeFunctionCalls": true,
+	"typescript.format.semicolons": "remove",
+	"typescript.format.insertSpaceBeforeFunctionParenthesis": false,
+	"typescript.preferences.quoteStyle": "single",
+	"typescript.preferences.importModuleSpecifier": "non-relative",
+	"typescript.preferences.importModuleSpecifierEnding": "index",
+	"typescript.suggest.completeFunctionCalls": true,
+	"[json]": {
+		"editor.quickSuggestions": {
+			"strings": true
+		},
+		"editor.suggest.insertMode": "replace"
+	},
+	"[markdown]": {
+		"editor.wordWrap": "on",
+		"editor.quickSuggestions": false
+	},
+	"git.enableCommitSigning": true,
+	"git.promptToSaveFilesBeforeCommit": "always",
+	"git.promptToSaveFilesBeforeStash": "always",
+	"git.pruneOnFetch": true,
+	"npm.packageManager": "yarn",
+	"cSpell.words": [
+		"brutessh",
+		"ftpcrack",
+		"hackerman",
+		"httpworm",
+		"relaysmtp",
+		"sqlinject"
+	],
+	"editor.codeActionsOnSave": {
+		"source.fixAll.eslint": true
+	},
+}
