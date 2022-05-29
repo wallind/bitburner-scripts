@@ -36,7 +36,7 @@ export async function main(ns) {
 		}
 		if (ns.getServerNumPortsRequired(server) <= openPorts) {
 			ns.nuke(server)
-			// await ns.installBackdoor()
+			await ns.singularity.installBackdoor()
 		} else {
 			return
 		}

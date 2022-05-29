@@ -1,5 +1,8 @@
 /** @param {import(".").NS} ns */
 export async function main(ns) {
+	ns.disableLog("getServerRequiredHackingLevel")
+	ns.disableLog("getHackingLevel")
+
 	const HOME = "home"
 	const depth = 20
 
@@ -12,10 +15,24 @@ export async function main(ns) {
 
 	let observedServers = []
 
-	const recursiveSearch = (scanRoot, cycle = 0) => {
+	const recursiveSearch = (scanRoot, fullPath, cycle = 0) => {
 		if (cycle === depth) {
 			return
 		}
+
+		// TODO:
+		// if (scanRoot === "The-Cave") {
+		// 	ns.tprint("Found The Cave")
+		// 	ns.tprint(fullPath)
+		// 	throw "END IT"
+		// }
+
+		// if (scanRoot === "The-Cave") {
+		// 	ns.tprint("Found The Cave")
+		// 	ns.tprint(fullPath)
+		// 	throw "END IT"
+		// }
+
 
 		// scan from the root input
 		const currentlyObservedServers = ns.scan(scanRoot)
@@ -27,11 +44,11 @@ export async function main(ns) {
 
 		// recursively traverse
 		for (const newServer of newlyObservedServers) {
-			recursiveSearch(newServer, cycle + 1)
+			recursiveSearch(newServer, fullPath + "/" + newServer, cycle + 1)
 		}
 	}
 
-	recursiveSearch(HOME)
+	recursiveSearch(HOME, HOME)
 
 	// these can be passed to spreader to ei
 	const validHackNodeTargets = observedServers = observedServers

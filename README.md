@@ -12,3 +12,8 @@ docs: https://bitburner.readthedocs.io/en/latest/
 # Type Definitions
 
 Sourced from (and therefore should be updated from `TODO:`) https://github.com/danielyxie/bitburner/blob/dev/src/ScriptEditor/NetscriptDefinitions.d.ts
+
+# Add a new section to the README.md
+
+## Section Title
+THIS IS A STATEMENT. 
