@@ -1,1 +1,9 @@
-vscode/*
+# cause Bitburner auth token is in there
+.vscode/
+
+# duh
+**/node_modules/*
+
+# Yarn stuff
+**/yarn-error.log
+**/tsconfig.tsbuildinfo
