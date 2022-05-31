@@ -13,7 +13,6 @@
 		"allowJs": true,
 		"checkJs": false,
 		"jsx": "preserve",
-		"incremental": true,
 		/* Strict Type-Checking Options */
 		"strict": true,
 		"noImplicitAny": true,
