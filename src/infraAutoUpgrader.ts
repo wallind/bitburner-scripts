@@ -1,12 +1,14 @@
-/** @param {import(".").NS} ns */
-export async function main(ns) {
+import { NS } from '/definitions/Bitburner'
+import { InfraUpgradeCandidate, InfraUpgradeType } from '/definitions/Infrastructure'
+
+export async function main(ns: NS) {
 	const myMoney = () => ns.getServerMoneyAvailable("home")
 
 	ns.disableLog("getServerMoneyAvailable")
 	ns.disableLog("sleep")
 
-	const getCheapestLevelUpgrade = () => {
-		let cheapestLevelUpgradeTarget = null
+	const getCheapestLevelUpgrade = (): InfraUpgradeCandidate | undefined => {
+		let cheapestLevelUpgradeTarget
 
 		for (let i = 0; i < ns.hacknet.numNodes(); i++) {
 			const candidateLevelUpgradeCost = ns.hacknet.getLevelUpgradeCost(i, 1)
@@ -14,7 +16,7 @@ export async function main(ns) {
 			if (!cheapestLevelUpgradeTarget || candidateLevelUpgradeCost < cheapestLevelUpgradeTarget.cost) {
 				cheapestLevelUpgradeTarget = {
 					cost: candidateLevelUpgradeCost,
-					type: 'level',
+					type: InfraUpgradeType.LEVEL,
 					nodeIndex: i,
 				}
 			}
@@ -22,8 +24,8 @@ export async function main(ns) {
 
 		return cheapestLevelUpgradeTarget
 	}
-	const getCheapestCoreUpgrade = () => {
-		let cheapestCoreUpgradeTarget = null
+	const getCheapestCoreUpgrade = (): InfraUpgradeCandidate | undefined => {
+		let cheapestCoreUpgradeTarget
 
 		for (let i = 0; i < ns.hacknet.numNodes(); i++) {
 			const candidateCoreUpgradeCost = ns.hacknet.getCoreUpgradeCost(i, 1)
@@ -31,7 +33,7 @@ export async function main(ns) {
 			if (!cheapestCoreUpgradeTarget || candidateCoreUpgradeCost < cheapestCoreUpgradeTarget.cost) {
 				cheapestCoreUpgradeTarget = {
 					cost: candidateCoreUpgradeCost,
-					type: 'core',
+					type: InfraUpgradeType.CORE,
 					nodeIndex: i,
 				}
 			}
@@ -39,11 +41,11 @@ export async function main(ns) {
 
 		return cheapestCoreUpgradeTarget
 	}
-	const getCheapestHackermanNetPurchase = () => {
+	const getCheapestHackermanNetPurchase = (): InfraUpgradeCandidate | undefined => {
 		const numPurchasedServers = ns.getPurchasedServers()
 
 		if (numPurchasedServers.length >= 25) {
-			return null
+			return
 		}
 
 		// slow ramp up to get hackerman* net up and running sooner
@@ -56,21 +58,20 @@ export async function main(ns) {
 
 		return {
 			cost: ns.getPurchasedServerCost(desiredRam),
-			type: 'hackerman-purchase',
-			nodeIndex: null,
+			type: InfraUpgradeType.HACKERMAN_PURCHASE,
 			desiredRam
 		}
 	}
 
-	const waitForMoney = async (cheapestUpgrade) => {
+	const waitForMoney = async (cheapestUpgrade: InfraUpgradeCandidate) => {
 		while (myMoney() < cheapestUpgrade.cost) {
 			// ns.print(`waiting 5sec for ${JSON.stringify(cheapestUpgrade)}; current_money: ${ns.nFormat(myMoney(), '($ 0.00 a)')}`)
 			await ns.sleep(5000)
 		}
 	}
 
-	const getCheapestRamUpgrade = () => {
-		let cheapestRamUpgradeTarget = null
+	const getCheapestRamUpgrade = (): InfraUpgradeCandidate | undefined => {
+		let cheapestRamUpgradeTarget
 
 		for (let i = 0; i < ns.hacknet.numNodes(); i++) {
 			const candidateRamUpgradeCost = ns.hacknet.getRamUpgradeCost(i, 1)
@@ -78,7 +79,7 @@ export async function main(ns) {
 			if (!cheapestRamUpgradeTarget || candidateRamUpgradeCost < cheapestRamUpgradeTarget.cost) {
 				cheapestRamUpgradeTarget = {
 					cost: candidateRamUpgradeCost,
-					type: 'ram',
+					type: InfraUpgradeType.RAM,
 					nodeIndex: i,
 				}
 			}
@@ -88,29 +89,24 @@ export async function main(ns) {
 	}
 
 	while (true) {
-		// {
-		// 	cost: number,
-		// 	type: string, 'ram' | 'core' | 'level' | 'node-purchase' | 'hackerman-purchase',
-		// 	nodeIndex: number,
-		//  desiredRam?: number
-		// }
-		const cheapestUpgrade = [
+
+		const cheapestUpgrade: InfraUpgradeCandidate = [
 			getCheapestRamUpgrade(),
 			getCheapestCoreUpgrade(),
 			getCheapestLevelUpgrade(),
 			getCheapestHackermanNetPurchase(),
 			{
 				cost: ns.hacknet.getPurchaseNodeCost(),
-				type: 'node-purchase',
-				nodeIndex: null
+				type: InfraUpgradeType.NODE_PURCHASE,
 			}
 		]
 			.filter(upgrade => upgrade)
+			.map(upgrade => upgrade as InfraUpgradeCandidate)
 			// sort the cheapest to the end
 			.sort((upgradeA, upgradeB) => {
-				const adjustedCost = (upgrade) => {
+				const adjustedCost = (upgrade: InfraUpgradeCandidate) => {
 					switch (upgrade.type) {
-						case 'core':
+						case InfraUpgradeType.CORE:
 							// cores should be slightly weighted after initial levels
 							if (upgrade.cost > 1000000) {
 								return upgrade.cost * 0.55
@@ -121,7 +117,7 @@ export async function main(ns) {
 							} else {
 								return upgrade.cost
 							}
-						case 'ram':
+						case InfraUpgradeType.RAM:
 							// this will cause RAM to be upgrade more often which will generally
 							// accelerate the hacknet development
 							if (upgrade.cost > 2000000) {
@@ -135,7 +131,7 @@ export async function main(ns) {
 							} else {
 								return upgrade.cost * 0.85
 							}
-						case 'level':
+						case InfraUpgradeType.LEVEL:
 							// de-prioritize levels over time as their returns diminish fast
 							if (upgrade.cost > 100000) {
 								return upgrade.cost * 3.00
@@ -146,7 +142,7 @@ export async function main(ns) {
 							} else {
 								return upgrade.cost
 							}
-						case 'node-purchase':
+						case InfraUpgradeType.NODE_PURCHASE:
 							// purchasing new nodes should not necessarily look ultra appealing as 
 							// it can cause slowdown in early phase by exacerbating cycles
 							if (upgrade.cost > 1000000) {
@@ -154,7 +150,7 @@ export async function main(ns) {
 							} else {
 								return upgrade.cost * 1.75
 							}
-						case 'hackerman-purchase':
+						case InfraUpgradeType.HACKERMAN_PURCHASE:
 							// slightly prioritize hackerman* net always
 							if (ns.getPurchasedServers().length < 4) {
 								return 50000
@@ -162,29 +158,30 @@ export async function main(ns) {
 								return upgrade.cost * 0.75
 							}
 						default:
-							throw "UNEXPECTED"
+							throw new Error("UNEXPECTED")
 					}
 				}
 
 				return adjustedCost(upgradeB) - adjustedCost(upgradeA)
 			})
-			.pop()
+			// not the safest thing but will be accurate enough for now
+			.pop() as InfraUpgradeCandidate
 
 		ns.print(`next upgrade is ${JSON.stringify(cheapestUpgrade)}`)
 
 		await waitForMoney(cheapestUpgrade)
 
 		switch (cheapestUpgrade.type) {
-			case 'core':
-				ns.hacknet.upgradeCore(cheapestUpgrade.nodeIndex, 1)
+			case InfraUpgradeType.CORE:
+				ns.hacknet.upgradeCore(cheapestUpgrade.nodeIndex as number, 1)
 				break
-			case 'ram':
-				ns.hacknet.upgradeRam(cheapestUpgrade.nodeIndex, 1)
+			case InfraUpgradeType.RAM:
+				ns.hacknet.upgradeRam(cheapestUpgrade.nodeIndex as number, 1)
 				break
-			case 'level':
-				ns.hacknet.upgradeLevel(cheapestUpgrade.nodeIndex, 1)
+			case InfraUpgradeType.LEVEL:
+				ns.hacknet.upgradeLevel(cheapestUpgrade.nodeIndex as number, 1)
 				break
-			case 'node-purchase':
+			case InfraUpgradeType.NODE_PURCHASE:
 				ns.hacknet.purchaseNode()
 				break
 			case 'hackerman-purchase':
@@ -199,10 +196,10 @@ export async function main(ns) {
 
 					return `hackerman${i}`
 				}
-				ns.purchaseServer(nextAvailableName(), cheapestUpgrade.desiredRam)
+				ns.purchaseServer(nextAvailableName(), cheapestUpgrade.desiredRam as number)
 				break
 			default:
-				throw "UNEXEPCTED"
+				throw new Error("UNEXPECTED")
 		}
 
 		await ns.sleep(1)

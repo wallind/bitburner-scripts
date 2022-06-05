@@ -1,13 +1,24 @@
-/** @param {import(".").NS} ns */
-export async function main(ns) {
+import { NS } from '/definitions/Bitburner'
+import { isStringArray } from '/lib/validation/basic'
+
+export async function main(ns: NS) {
 	const SECURITY_HOT_THRESHOLD = 11
 	ns.disableLog("getServerMoneyAvailable")
 	ns.disableLog("getServerMaxMoney")
 	ns.disableLog("getServerMinSecurityLevel")
 	ns.disableLog("getServerSecurityLevel")
 
-	const targetList = ns.args
-	let currentTarget = ns.args.find(server => ns.getServerMoneyAvailable(server))
+	let targetList: string[]
+
+	// TODO: make this better
+	if (!isStringArray(ns.args)) {
+		ns.print(`INVALID`)
+		throw new Error(`Invalid target list via args`)
+	} else {
+		targetList = ns.args as string[]
+	}
+
+	let currentTarget: string | undefined = targetList.find(server => ns.getServerMoneyAvailable(server))
 
 	const securityScreen = () => {
 		if (!currentTarget) {
@@ -19,12 +30,16 @@ export async function main(ns) {
 
 		if (currentTargetCurrentSecurity - currentTargetMinSecurity > SECURITY_HOT_THRESHOLD) {
 			ns.print(`HACKING TARGET ${currentTarget} TOO HOT; falling back`)
-			currentTarget = null
+			currentTarget = undefined
 		}
 	}
 
 	const selectNewBestTarget = () => {
 		for (const candidateTarget of targetList) {
+			if (!currentTarget) {
+				currentTarget = candidateTarget
+			}
+
 			const currentTargetMoneyAvailable = ns.getServerMoneyAvailable(currentTarget)
 			const currentTargetMaxMoney = ns.getServerMaxMoney(currentTarget)
 			const currentTargetWealthProportion =
@@ -64,11 +79,9 @@ export async function main(ns) {
 					+ `\t\tMAX_MONEY: ${ns.nFormat(candidateTargetMaxMoney, "($0.00a)")}\n`
 					+ `\t\tPROPORTIONAL_WEALTH: ${ns.nFormat(candidateTargetWealthProportion, "0.000%")}\n`
 					+ `\t\tSECURITY_DIFFERENTIAL: ${ns.nFormat(candidateTargetSecurityDifferential, "0.000")}\n`
-
 				)
 
 				currentTarget = candidateTarget
-				return true
 			}
 		}
 	}

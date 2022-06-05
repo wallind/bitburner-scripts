@@ -1,13 +1,36 @@
-/** @param {import(".").NS} ns */
-export async function main(ns) {
+import { NS } from '/definitions/Bitburner'
+import { isStringArray } from '/lib/validation/basic'
+
+interface GrowTarget {
+	server: string
+	max: number
+	available: number
+	proportion: number
+	securityMultiplier: number
+	runtimeMs: number
+
+	// lower candidate score means more desirable
+	candidateScore: number
+}
+
+export async function main(ns: NS) {
 	const SECURITY_HOT_THRESHOLD = 11
 	ns.disableLog("getServerMaxMoney")
 	ns.disableLog("getServerMoneyAvailable")
 	ns.disableLog("getServerMinSecurityLevel")
 	ns.disableLog("getServerSecurityLevel")
 
-	const growTargetList = ns.args
-	let currentGrowTarget
+	let growTargetList: string[]
+
+	// TODO: make this better
+	if (!isStringArray(ns.args)) {
+		ns.print(`INVALID`)
+		throw new Error(`Invalid target list via args`)
+	} else {
+		growTargetList = ns.args as string[]
+	}
+
+	let currentGrowTarget: GrowTarget | undefined
 
 	const securityScreen = () => {
 		if (!currentGrowTarget) {
@@ -19,11 +42,11 @@ export async function main(ns) {
 
 		if (currentGrowTargetCurrentSecurity - currentGrowTargetMinSecurity > SECURITY_HOT_THRESHOLD) {
 			ns.print(`CURRENT GROWING TARGET ${currentGrowTarget.server} TOO HOT; falling back`)
-			currentGrowTarget = null
+			currentGrowTarget = undefined
 		}
 	}
 
-	const processGrowerTarget = (candidateGrowTarget) => {
+	const processGrowerTarget = (candidateGrowTarget: string): GrowTarget | undefined => {
 		const candidateGrowTargetMoneyAvailable = ns.getServerMoneyAvailable(candidateGrowTarget)
 		const candidateGrowTargetMaxMoney = ns.getServerMaxMoney(candidateGrowTarget)
 		const candidateGrowTargetWealthProportion =
@@ -59,7 +82,7 @@ export async function main(ns) {
 				// apply a slight preference for current rich targets
 				* 1 / (candidateGrowTargetMoneyAvailable > 1000000 ? 4 : 1)
 
-				// strongly prefer ultrarich targets
+				// strongly prefer ultra-rich targets
 				* 1 / (candidateGrowTargetMaxMoney / 10000000)
 		}
 	}
@@ -68,13 +91,14 @@ export async function main(ns) {
 		const candidates = growTargetList
 			.map(target => processGrowerTarget(target))
 			.filter(target => target)
+			.map(target => target as GrowTarget)
 			.filter(target => target.server !== (currentGrowTarget && currentGrowTarget.server || "LOLOLOLOLOL🕺"))
 			.filter(target => target.securityMultiplier < SECURITY_HOT_THRESHOLD)
 
 		if (candidates.length <= 0) {
 			ns.print(`⚠ WARNING ⚠; sleeping for 15s as all grow targets have > 18 security_differential`)
 			await ns.sleep(15000)
-			currentGrowTarget = null
+			currentGrowTarget = undefined
 			return
 		}
 
@@ -88,7 +112,7 @@ export async function main(ns) {
 							+ `\t\tCURRENT_MONEY/MAX_MONEY: ${ns.nFormat(currentGrowTarget.available, '($0.00a)')}/${ns.nFormat(currentGrowTarget.max, '($0.00a)')}\n`
 							+ `\t\tPROPORTIONAL_WEALTH: ${ns.nFormat(currentGrowTarget.proportion, '0.000%')}\n`
 							+ `\t\tSECURITY_DIFFERENTIAL: ${ns.nFormat(currentGrowTarget.securityMultiplier, '0.00')}\n`
-							+ `\t\tRUNTIME: ${ns.tFormat(currentGrowTarget.runtimeMs, '0.00')}\n`
+							+ `\t\tRUNTIME_MS: ${ns.nFormat(currentGrowTarget.runtimeMs, '0.00')}\n`
 							+ `\t\tCANDIDATE_SCORE: ${ns.nFormat(currentGrowTarget.candidateScore, '0.00000')}\n`
 							:
 							'\tFROM: N/A - NO_CURRENT_TARGET'
@@ -97,7 +121,7 @@ export async function main(ns) {
 					+ `\t\tCURRENT_MONEY/MAX_MONEY: ${ns.nFormat(candidateGrowTarget.available, '($0.00a)')}/${ns.nFormat(candidateGrowTarget.max, '($0.00a)')}\n`
 					+ `\t\tPROPORTIONAL_WEALTH: ${ns.nFormat(candidateGrowTarget.proportion, '0.000%')}\n`
 					+ `\t\tSECURITY_DIFFERENTIAL: ${ns.nFormat(candidateGrowTarget.securityMultiplier, '0.00')}\n`
-					+ `\t\tRUNTIME: ${ns.tFormat(candidateGrowTarget.runtimeMs, '0.00')}\n`
+					+ `\t\tRUNTIME_MS: ${ns.nFormat(candidateGrowTarget.runtimeMs, '0.00')}\n`
 					+ `\t\tCANDIDATE_SCORE: ${ns.nFormat(candidateGrowTarget.candidateScore, '0.00000')}\n`
 
 				)
@@ -107,7 +131,7 @@ export async function main(ns) {
 		}
 	}
 
-	currentGrowTarget = processGrowerTarget(ns.args.find(target => processGrowerTarget(target)))
+	currentGrowTarget = processGrowerTarget(growTargetList.find(target => processGrowerTarget(target)) as string)
 
 	while (true) {
 		securityScreen()
