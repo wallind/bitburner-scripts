@@ -1,3 +1,6 @@
+/**
+ * paths to the executable scripts
+ */
 export const enum ScriptPath {
 	HACK = "hack.js",
 	GROWER = "grower.js",

@@ -9,6 +9,4 @@ export async function main(ns: NS) {
 	ns.exec(ScriptPath.INFRA_AUTO_UPGRADER_SERVICE, Hostname.HOME, 1)
 	ns.exec(ScriptPath.FACTION_MANAGER_SERVICE, Hostname.HOME, 1)
 	ns.exec(ScriptPath.NETWORK_MANGER_SERVICE, Hostname.HOME, 1)
-
-	ns.tprint("hmmmm")
 }

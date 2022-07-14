@@ -69,6 +69,8 @@ export async function main(ns: NS) {
 				FactionName.BitRunners,
 				FactionName.TheBlackHand,
 				FactionName.TianDiHui,
+				// FactionName.Daedalus,
+				FactionName.Sector12
 			].includes(factionInvite as FactionName)) {
 				ns.tprint(`Accepting faction invite from ${factionInvite}`)
 				ns.singularity.joinFaction(factionInvite)
@@ -88,6 +90,6 @@ export async function main(ns: NS) {
 			}
 		}
 
-		await ns.sleep(MINUTE_MS)
+		await ns.sleep(MINUTE_MS * 5)
 	}
 }
