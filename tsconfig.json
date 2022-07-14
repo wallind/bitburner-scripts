@@ -10,7 +10,6 @@
 			"esnext",
 			"dom"
 		],
-		"allowJs": true,
 		"checkJs": false,
 		"jsx": "preserve",
 		/* Strict Type-Checking Options */
@@ -40,13 +39,5 @@
 		"esModuleInterop": true,
 		"preserveSymlinks": true,
 		"outDir": "build/",
-		"plugins": [
-			{
-				"transform": "@zerollup/ts-transform-paths",
-				"exclude": [
-					"*"
-				]
-			}
-		]
 	},
 }
