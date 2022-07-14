@@ -1,10 +1,11 @@
-import { NS, Server } from '../definitions/Bitburner'
-import { Hostname } from '/definitions/Network'
-import { HostnameDetail } from '/definitions/NetworkManager'
+import { NS, Server } from '/definitions/Bitburner'
+import { Hostname } from '/definitions/network/Network'
+import { HostnameDetail } from '/definitions/network/NetworkManagerService'
 
 /**
  * Attempt to breach a server in totality by executing all possible hack files
- * and then if enough ports are opened nuking and backdooring.
+ * and then if enough ports are opened executing nuke and backdoor if hacking 
+ * level permits.
  * 
  * @param ns Bitburner namespace
  * @param targetServer Server to attempt breaching
@@ -14,26 +15,41 @@ export const attemptServerBreach = async (ns: NS, targetServer: Server, targetHo
 	if (!targetServer.hasAdminRights) {
 		let openPorts = 0
 
-		if (ns.fileExists("BruteSSH.exe") && !targetServer.sshPortOpen) {
+		if (targetServer.sshPortOpen) {
+			openPorts++
+		} else if (ns.fileExists("BruteSSH.exe")) {
 			ns.brutessh(targetServer.hostname)
 			openPorts++
 		}
-		if (ns.fileExists("FTPCrack.exe") && !targetServer.ftpPortOpen) {
+
+		if (targetServer.ftpPortOpen) {
+			openPorts++
+		} else if (ns.fileExists("FTPCrack.exe")) {
 			ns.ftpcrack(targetServer.hostname)
 			openPorts++
 		}
-		if (ns.fileExists("RelaySMTP.exe") && !targetServer.smtpPortOpen) {
+
+		if (targetServer.smtpPortOpen) {
+			openPorts++
+		} else if (ns.fileExists("RelaySMTP.exe")) {
 			ns.relaysmtp(targetServer.hostname)
 			openPorts++
 		}
-		if (ns.fileExists("HTTPWorm.exe") && !targetServer.httpPortOpen) {
+
+		if (targetServer.httpPortOpen) {
+			openPorts++
+		} else if (ns.fileExists("HTTPWorm.exe")) {
 			ns.httpworm(targetServer.hostname)
 			openPorts++
 		}
-		if (ns.fileExists("SQLInject.exe") && !targetServer.sqlPortOpen) {
+
+		if (targetServer.sqlPortOpen) {
+			openPorts++
+		} else if (ns.fileExists("SQLInject.exe")) {
 			ns.sqlinject(targetServer.hostname)
 			openPorts++
 		}
+
 		if (targetServer.numOpenPortsRequired <= openPorts) {
 			ns.tprint(`gaining rootAccess for ${targetServer.hostname}`)
 			ns.killall(targetServer.hostname)

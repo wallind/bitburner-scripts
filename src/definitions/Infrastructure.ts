@@ -11,7 +11,7 @@ export interface InfraUpgradeCandidate {
 /**
  * TODO:
  */
-export const enum InfraUpgradeType {
+export enum InfraUpgradeType {
 	RAM = 'ram',
 	CORE = 'core',
 	LEVEL = 'level',

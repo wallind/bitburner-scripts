@@ -1,5 +1,5 @@
 import { NS, Server } from '/definitions/Bitburner'
-import { Action, CurrentNetworkProjection, Worker } from '/definitions/NetworkManager'
+import { Action, CurrentNetworkProjection, Worker } from '/definitions/network/NetworkManagerService'
 import { calculateServerGrowth } from '/lib/targeting/growth'
 
 /**

@@ -1,7 +1,7 @@
-import { NS, Server } from './definitions/Bitburner'
-import { Hostname } from '/definitions/Network'
-import { HostnameDetail } from '/definitions/NetworkManager'
-import { ScriptName } from '/definitions/Scripts'
+import { NS, Server } from '/definitions/Bitburner'
+import { Hostname } from '/definitions/network/Network'
+import { HostnameDetail } from '/definitions/network/NetworkManagerService'
+import { ScriptPath } from '/definitions/Scripts'
 import { attemptServerBreach, recursivelyBuildHostnameList } from '/lib/utils'
 
 export async function main(ns: NS) {
@@ -18,12 +18,14 @@ export async function main(ns: NS) {
 
 	const spread = async (rootAccessHostnames: string[]) => {
 		/**
-		 * TODO:
+		 * Copies the provided script and the entire lib directory to the target server and then
+		 * executes the script with the provided arguments.
 		 * 
-		 * @param hostname 
-		 * @param scriptToUse 
+		 * @param hostname The hostname of the server to copy+execute the script on
+		 * @param scriptToUse The script to copy+execute
+		 * @param args The arguments to pass to the script
 		 */
-		const execOnServer = async (hostname: string, scriptToUse: ScriptName, args: string[]) => {
+		const execOnServer = async (hostname: string, scriptToUse: ScriptPath, args: string[]) => {
 			await ns.scp(scriptToUse, hostname)
 			const libFiles = ns.ls(Hostname.HOME, "lib")
 			await ns.scp(libFiles, hostname)
@@ -45,23 +47,24 @@ export async function main(ns: NS) {
 				.sort((serverHostnameA, serverHostnameB) =>
 					ns.getServerMaxRam(serverHostnameB) - ns.getServerMaxRam(serverHostnameA))
 			// take the first(strongest)
-			[0]
+			[0] // ignore the haters who say "what if there are no servers"
 
-		await execOnServer(strongestServerHostname, ScriptName.HACK, hackTargetServers.map(server => server.hostname))
+
+		await execOnServer(strongestServerHostname, ScriptPath.HACK, hackTargetServers.map(server => server.hostname))
 
 		// avoid re-using the 'hack' server
 		rootAccessHostnames = rootAccessHostnames.filter(hostname => hostname !== strongestServerHostname)
 
 		// deploy scripts to the rest of the servers
 		for (let i = 0; i < rootAccessHostnames.length; i++) {
-			let scriptToUse
+			let scriptToUse: ScriptPath
 
 			// 2:1 GROWER:WEAKENER (save for first 4 are to be growers)
 			// W -> G -> G -> W -> G -> G-> etc..
 			if (i > 3 && i % 3 === 0) {
-				scriptToUse = ScriptName.WEAKENER
+				scriptToUse = ScriptPath.WEAKENER
 			} else {
-				scriptToUse = ScriptName.GROWER
+				scriptToUse = ScriptPath.GROWER
 			}
 
 			await execOnServer(rootAccessHostnames[i], scriptToUse, growAndWeakenTargetServers.map(server => server.hostname))
@@ -69,7 +72,14 @@ export async function main(ns: NS) {
 	}
 
 	/**
-	 * TODO:
+	 * Refresh the manager's information about the network in the process breaching any servers
+	 * that we have the ability to but haven't yet.
+	 * 
+	 * Information gathered:
+	 * - servers we have root access for
+	 * - servers we can--and want to-- hack
+	 * - servers we can--and want to-- grow and weaken
+	 * TODO: network projection details
 	 */
 	const refreshNetworkInfo = async () => {
 		ns.print(`Refreshing network info...`)
@@ -96,15 +106,19 @@ export async function main(ns: NS) {
 	}
 
 	/**
-	 * TODO:
+	 * Reboot the entire network which entails the following:
+	 * - kill all deployed scripts
+	 * - kill the grower+weakener worker combo on home
+	 * - spread the hacker (singular) and growers and weakeners to the network
+	 * - start back up the grower+weakener worker combo on home
 	 */
 	const reboot = async () => {
 		ns.tprint(`Rebooting...`)
 		// kill all running remote scripts so spread can re-deploy stuff with new network info
 		serversWithRootAccess.forEach(server => ns.killall(server.hostname))
 		// kill home maintainers so they can be re-deployed with new network info
-		ns.scriptKill(ScriptName.GROWER, Hostname.HOME)
-		ns.scriptKill(ScriptName.WEAKENER, Hostname.HOME)
+		ns.scriptKill(ScriptPath.GROWER, Hostname.HOME)
+		ns.scriptKill(ScriptPath.WEAKENER, Hostname.HOME)
 
 		const rootAccessHostnames = serversWithRootAccess.map(server => server.hostname)
 
@@ -113,21 +127,22 @@ export async function main(ns: NS) {
 
 		// use what's left of the RAM on home for a grower+weakener split evenly
 		const ramForGrowersAndWeakeners = ns.getServerMaxRam(Hostname.HOME)
-			- ns.getScriptRam(ScriptName.NETWORK_MANAGER)
-			- ns.getScriptRam(ScriptName.INFRA_AUTO_UPGRADER)
+			- ns.getScriptRam(ScriptPath.NETWORK_MANGER_SERVICE)
+			- ns.getScriptRam(ScriptPath.INFRA_AUTO_UPGRADER_SERVICE)
+			- ns.getScriptRam(ScriptPath.FACTION_MANAGER_SERVICE)
 		const maxThreadsForMaintainers =
 			Math.floor(
 				Math.floor(
 					ramForGrowersAndWeakeners
 					/
-					Math.max(ns.getScriptRam(ScriptName.GROWER))
+					Math.max(ns.getScriptRam(ScriptPath.GROWER))
 				)
 				/
 				2
 			) - 1
 		// deploy weaken and grow maintenance workers
-		ns.exec(ScriptName.GROWER, Hostname.HOME, maxThreadsForMaintainers, ...growAndWeakenTargetServers.map(server => server.hostname))
-		ns.exec(ScriptName.WEAKENER, Hostname.HOME, maxThreadsForMaintainers, ...growAndWeakenTargetServers.map(server => server.hostname))
+		ns.exec(ScriptPath.GROWER, Hostname.HOME, maxThreadsForMaintainers, ...growAndWeakenTargetServers.map(server => server.hostname))
+		ns.exec(ScriptPath.WEAKENER, Hostname.HOME, maxThreadsForMaintainers, ...growAndWeakenTargetServers.map(server => server.hostname))
 	}
 
 	while (true) {
